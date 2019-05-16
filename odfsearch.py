@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# use odfsearch.py searchword ./place-to-start/
+# todo: convert all .doc to .odt
 import os
 import sys
 import re
@@ -7,6 +9,9 @@ from zipfile import ZipFile
 import xml.dom.minidom
 from lxml import etree
 
+if len(sys.argv) <= 2:
+    print('To few arguments, please use: odfsearch.py searchword ./place-to-start/')
+    sys.exit(0)
 rootdir = sys.argv[2]
 matches = []
 
@@ -14,12 +19,28 @@ with open('output.txt','w') as fout:
     for root, subFolders, files in os.walk(rootdir):
         for filename in files:
             if filename.endswith(('.odt', '.odp', '.ods')):
+#	            print filename
                 zipname = os.path.join(root, filename)
-                zf = ZipFile(zipname, 'r')
-                xml_string = zf.read('content.xml')
+                try:
+                    zf = ZipFile(zipname, 'r')
+                    xml_string = zf.read('content.xml')
+                except:
+                    print 'error',os.path.join(root, filename), "document is not a zipfile"
+                if re.search(sys.argv[1], xml_string):
+                    print 'found "',(sys.argv[1]), '" in:' , os.path.join(root, filename)
+                    matches.append(os.path.join(root, filename))
+                zf.close()
+            if filename.endswith(('.doc', '.docx')):
+#                print filename
+                zipname = os.path.join(root, filename)
+                try:
+                    zf = ZipFile(zipname, 'r')
+                    xml_string = zf.read('word/document.xml')
+                except:
+                    print 'error',os.path.join(root, filename), " is not a zipfile"
                 if re.search(sys.argv[1], xml_string):
                     print 'found', (sys.argv[1]), 'in:' , os.path.join(root, filename)
                     matches.append(os.path.join(root, filename))
                 zf.close()
-#print '\n '.join(matches)
 
+#print '\n '.join(matches)
